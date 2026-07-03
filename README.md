@@ -95,7 +95,7 @@ Typical performance ranking:
 
 GA < PSO < Hybrid GA-PSO < Hybrid PSO-GA < QIGA < QPSO
 
-## 🎯 Applications
+## Applications
 
 - Defense Resource Allocation
 - Weapon Target Assignment
