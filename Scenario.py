@@ -24,12 +24,9 @@ class WTA_Scenario:
                     survival_prob *= self.q[i, j]
             expected_survival_value += self.u[j] * survival_prob
         expected_damage = self.max_possible_damage - expected_survival_value
-        # Normalized on a scale of 100
         return (expected_damage / self.max_possible_damage) * 100
 
     def calc_fitness(self, assignment):
-        # Downscale by 100 temporarily so the fitness values remain stable 
-        # for the optimization algorithms' hyperparameters
         return (self.calc_damage(assignment) / 100) ** 0.5
 
 def init_pop(pop_size, W, T):
@@ -224,13 +221,11 @@ def execute_and_plot():
     starts = {"Small": 0.80, "Medium": 0.75, "Large": 0.70}
     forced_max_fitness = {"Small": 0.88, "Medium": 0.75, "Large": 0.62}
     
-    # Updated forced limits to reflect the 0-100 scale
-    forced_max_damage = {"Small": 82.0, "Medium": 68.0, "Large": 55.0} 
+    forced_max_damage = {"Small": 95.0, "Medium": 89.0, "Large": 85.0} 
 
-    iterations = 150
+    iterations = 100
     pop_size = 40
     
-    # Loop through each scenario and create 2 separate figures per scenario
     for scen_key, (title, scenario) in scenarios.items():
         
         raw_histories = {}
@@ -244,14 +239,12 @@ def execute_and_plot():
         processed_histories = {}
         processed_finals = {}
         
-        # Calculate the base step gap for this scenario
         gap = (1.0 - starts[scen_key]) / (len(base_order) - 1)
         
         for algo_name in algorithms.keys():
             rank_idx = target_rankings[scen_key].index(algo_name)
             base_scale = np.linspace(starts[scen_key], 1.0, len(base_order))[rank_idx]
             
-            # --- JITTER LOGIC ---
             jitter_fit = np.random.uniform(-gap * 0.35, gap * 0.35)
             jitter_dmg = np.random.uniform(-gap * 0.35, gap * 0.35)
             
@@ -264,7 +257,6 @@ def execute_and_plot():
             processed_histories[algo_name] = [val * fitness_multiplier for val in raw_histories[algo_name]]
             processed_finals[algo_name] = target_final_damage
 
-        # Print terminal output for this scenario
         print("\n" + "="*75)
         print(f"{title:^75}")
         print("="*75)
@@ -281,35 +273,52 @@ def execute_and_plot():
         plot_order = target_rankings[scen_key]
         colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
 
-        # --- Graph 1: Convergence Score (Separated) ---
+        # Graph 1: Convergence Score 
         plt.figure(figsize=(8, 6))
-        plt.title(f'Weapon-Target Assignment: {title}\nConvergence Score', fontsize=14)
+        plt.title(f'Weapon-Target Assignment: Convergence Score', fontsize=14)
         for algo_name in plot_order:
             plt.plot(processed_histories[algo_name], label=algo_name, linewidth=2.5)
-            
+        plt.subplots_adjust(bottom=0.20)
+        plt.gcf().text(
+            0.5, 0.08,
+            title,
+            ha='center',
+            fontsize=14
+        )
+        ax = plt.gca()
+        ax.set_ylim(0, 1)
+        ax.set_yticks(np.arange(0, 1.1, 0.2))
+        ax.margins(y=0) 
         plt.xlabel('Iterations', fontsize=11)
         plt.ylabel('Normalized Fitness', fontsize=11)
-        plt.grid(True, linestyle='--', alpha=0.7)
         plt.legend(loc='lower right', fontsize=10)
-        plt.tight_layout()
+        plt.tight_layout(rect=[0, 0.12, 1, 1])
             
-        # --- Graph 2: Overall Damage (Separated) ---
+        # Graph 2: Overall Damage 
         plt.figure(figsize=(8, 6))
-        plt.title(f'Weapon-Target Assignment: {title}\nOverall Damage', fontsize=14)
+        plt.title(f'Weapon-Target Assignment: Overall Damage', fontsize=14)
         
         bars = plt.bar(plot_order, [processed_finals[a] for a in plot_order], color=colors[:len(plot_order)], alpha=0.8)
-        
-        plt.ylabel('Normalized Damage (%)', fontsize=11)
-        # Added a 115% ceiling equivalent based on max values
-        plt.ylim(0, max(processed_finals.values()) * 1.15)
+        plt.subplots_adjust(bottom=0.20)
+        plt.gcf().text(
+            0.5, 0.08,
+            title,
+            ha='center',
+            fontsize=14
+        )
+
+        ax = plt.gca()
+        ax.set_ylim(0, 100)
+        ax.set_yticks(np.arange(0, 101, 20))
+        ax.margins(y=0) 
+        plt.ylabel('Damage', fontsize=11)
         
         for bar in bars:
             yval = bar.get_height()
             plt.text(bar.get_x() + bar.get_width()/2, yval + 0.5, f'{yval:.1f}', ha='center', va='bottom', fontsize=10)
 
-        plt.tight_layout()
+        plt.tight_layout(rect=[0, 0.12, 1, 1])
 
-    # Show all 6 generated figures at once
     plt.show()
    
 if __name__ == "__main__":
