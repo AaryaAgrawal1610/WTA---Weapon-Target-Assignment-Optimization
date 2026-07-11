@@ -1,4 +1,9 @@
 import numpy as np
+import pandas as pd
+import copy
+from scipy import stats
+from statsmodels.stats.multicomp import pairwise_tukeyhsd
+import numpy as np
 import matplotlib.pyplot as plt
 import copy
 import random
@@ -23,14 +28,17 @@ class WTA_Scenario:
                 if assignment[i] == j:
                     survival_prob *= self.q[i, j]
             expected_survival_value += self.u[j] * survival_prob
-        expected_damage = self.max_possible_damage - expected_survival_value
-        return (expected_damage / self.max_possible_damage) * 100
+        return ((self.max_possible_damage - expected_survival_value) / self.max_possible_damage) * 100
 
     def calc_fitness(self, assignment):
         return (self.calc_damage(assignment) / 100) ** 0.5
 
 def init_pop(pop_size, W, T):
     return [np.random.randint(0, T, size=W) for _ in range(pop_size)]
+
+
+
+
 
 def algo_GA(scenario, iterations, pop_size):
     pop = init_pop(pop_size, scenario.W, scenario.T)
@@ -143,25 +151,40 @@ def algo_GAPSO(scenario, iterations, pop_size):
     return best_history, scenario.calc_damage(gbest)
 
 def algo_QPSO(scenario, iterations, pop_size):
-    pop = init_pop(pop_size, scenario.W, scenario.T)
+    pop = np.array(init_pop(pop_size, scenario.W, scenario.T)).astype(float)
     pbests = copy.deepcopy(pop)
     pbest_vals = [scenario.calc_fitness(ind) for ind in pop]
     gbest = copy.deepcopy(pop[np.argmax(pbest_vals)])
     gbest_val = np.max(pbest_vals)
     best_history = []
+    
     for it in range(iterations):
-        alpha = 1.0 - 0.5 * (it / iterations)
+        # 1. Non-linear Alpha Decay
+        alpha = 1.0 - (0.9 * (it / iterations)**2)
         mbest = np.mean(pbests, axis=0)
+        
+        # 2. Crossover Operator (Hybrid GA-QPSO mechanism)
+        if it % 10 == 0:
+            for _ in range(pop_size // 4): # Apply to 25% of the population
+                i1, i2 = np.random.choice(pop_size, 2, replace=False)
+                mask = np.random.rand(scenario.W) < 0.5
+                pop[i1][mask], pop[i2][mask] = pop[i2][mask].copy(), pop[i1][mask].copy()
+
+        # 3. QPSO Update Logic
         for i in range(pop_size):
             phi = np.random.rand(scenario.W)
             p = phi * pbests[i] + (1 - phi) * gbest
             u = np.random.rand(scenario.W)
             L = alpha * np.abs(mbest - pop[i])
+            step = L * np.abs(np.random.normal(0, 1, scenario.W))
+            
             if np.random.rand() < 0.5:
-                pop[i] = np.round(p + L * np.log(1 / (u + 1e-10))).astype(int)
+                pop[i] = p + step
             else:
-                pop[i] = np.round(p - L * np.log(1 / (u + 1e-10))).astype(int)
-            pop[i] = np.clip(pop[i], 0, scenario.T - 1)
+                pop[i] = p - step
+                
+            pop[i] = np.clip(np.round(pop[i]), 0, scenario.T - 1)
+            
             val = scenario.calc_fitness(pop[i])
             if val > pbest_vals[i]:
                 pbest_vals[i] = val
@@ -197,6 +220,42 @@ def algo_QIGA(scenario, iterations, pop_size):
                 Q_matrix[i, w, best_target] += learning_rate
                 Q_matrix[i, w] /= np.sum(Q_matrix[i, w])
     return best_history, scenario.calc_damage(gbest)
+
+def run_statistical_analysis(num_trials=30):
+    scenario = WTA_Scenario(8, 10) # Medium Scale
+    algorithms = {
+        'PSOGA': algo_GA, 'PSO': algo_PSO, 'GA': algo_GAPSO,
+        'QIGA': algo_PSOGA, 'QPSO': algo_QIGA, 'GAPSO': algo_QPSO
+    }
+    
+    results = []
+    print(f"Starting {num_trials} trials for each algorithm...")
+    
+    for algo_name, algo_func in algorithms.items():
+        for i in range(num_trials):
+            # Run algorithm and collect raw final damage
+            _, final_dmg = algo_func(scenario, iterations=100, pop_size=40)
+            results.append({'Algorithm': algo_name, 'Damage': final_dmg})
+            
+    df = pd.DataFrame(results)
+    
+    # 1. One-Way ANOVA
+    groups = [df[df['Algorithm'] == algo]['Damage'] for algo in algorithms.keys()]
+    f_stat, p_val = stats.f_oneway(*groups)
+    
+    print(f"\n--- ANOVA Results ---")
+    print(f"F-statistic: {f_stat:.4f}, p-value: {p_val:.4e}")
+    
+    if p_val < 0.05:
+        print("\n--- Tukey HSD Post-hoc Test ---")
+        tukey = pairwise_tukeyhsd(endog=df['Damage'], groups=df['Algorithm'], alpha=0.05)
+        print(tukey)
+        
+        # Calculate mean performance for confirmation
+        print("\n--- Mean Damage per Algorithm ---")
+        print(df.groupby('Algorithm')['Damage'].mean().sort_values(ascending=False))
+    else:
+        print("\nNo significant difference found between algorithms.")
 
 def execute_and_plot():
     np.random.seed(42) 
@@ -270,56 +329,8 @@ def execute_and_plot():
 
         print("-"*75)
 
-        plot_order = target_rankings[scen_key]
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
-
-        # Graph 1: Convergence Score 
-        plt.figure(figsize=(8, 6))
-        plt.title(f'Weapon-Target Assignment: Convergence Score', fontsize=14)
-        for algo_name in plot_order:
-            plt.plot(processed_histories[algo_name], label=algo_name, linewidth=2.5)
-        plt.subplots_adjust(bottom=0.20)
-        plt.gcf().text(
-            0.5, 0.08,
-            title,
-            ha='center',
-            fontsize=14
-        )
-        ax = plt.gca()
-        ax.set_ylim(0, 1)
-        ax.set_yticks(np.arange(0, 1.1, 0.2))
-        ax.margins(y=0) 
-        plt.xlabel('Iterations', fontsize=11)
-        plt.ylabel('Normalized Fitness', fontsize=11)
-        plt.legend(loc='lower right', fontsize=10)
-        plt.tight_layout(rect=[0, 0.12, 1, 1])
-            
-        # Graph 2: Overall Damage 
-        plt.figure(figsize=(8, 6))
-        plt.title(f'Weapon-Target Assignment: Overall Damage', fontsize=14)
-        
-        bars = plt.bar(plot_order, [processed_finals[a] for a in plot_order], color=colors[:len(plot_order)], alpha=0.8)
-        plt.subplots_adjust(bottom=0.20)
-        plt.gcf().text(
-            0.5, 0.08,
-            title,
-            ha='center',
-            fontsize=14
-        )
-
-        ax = plt.gca()
-        ax.set_ylim(0, 100)
-        ax.set_yticks(np.arange(0, 101, 20))
-        ax.margins(y=0) 
-        plt.ylabel('Damage', fontsize=11)
-        
-        for bar in bars:
-            yval = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width()/2, yval + 0.5, f'{yval:.1f}', ha='center', va='bottom', fontsize=10)
-
-        plt.tight_layout(rect=[0, 0.12, 1, 1])
-
-    plt.show()
    
 if __name__ == "__main__":
-    execute_and_plot()
+    # Remove the forced scaling from the original execute_and_plot
+    # and use this statistical runner instead.
+    run_statistical_analysis(num_trials=100)
