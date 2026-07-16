@@ -446,14 +446,13 @@ def run_psoga():
 
 # QPSO 
 def run_qpso():
-    # Parameters provided
     c1, c2 = 2, 2
     r1, r2 = 0.6, 0.4
     b = 0.75
     THRESHOLD = 0.5
     BITS_PER_CELL = 4  
     CELLS = 9
-    DIM = CELLS * BITS_PER_CELL  # 36 variables total
+    DIM = CELLS * BITS_PER_CELL  
 
     best_target_values = np.max(W[:, np.newaxis] * P * U, axis=1)
     MAX_THEORETICAL_DAMAGE = np.sum(Q * best_target_values)
@@ -499,7 +498,6 @@ def run_qpso():
                 global_best_X = np.copy(X[i])
                 global_best_matrix = np.copy(X_matrix)
                 
-        # Guard against plotting negatives if penalties drag it down
         best_history.append(max(0.0, global_best_fitness) / MAX_THEORETICAL_DAMAGE)
         
         if global_best_matrix is not None:
@@ -608,28 +606,6 @@ gapso_damage, gapso_nd = calc_normalized_damage(gapso_X)
 psoga_damage, psoga_nd = calc_normalized_damage(psoga_X)
 qpso_damage, qpso_nd = calc_normalized_damage(qpso_X)
 qiga_damage, qiga_nd = calc_normalized_damage(qiga_X)
-
-# Applying same scaling layout for visual comparison
-ga_hist    = np.array(ga_hist)    * 0.99
-pso_hist   = np.array(pso_hist)   * 0.85
-gapso_hist = np.array(gapso_hist) * 0.90
-psoga_hist = np.array(psoga_hist) * 1.11
-qiga_hist  = np.array(qiga_hist)  * 1.05
-qpso_hist  = np.array(qpso_hist)  * 1.08
-
-ga_hist    = np.minimum(ga_hist, 0.46)
-pso_hist   = np.minimum(pso_hist, 0.52)
-gapso_hist = np.minimum(gapso_hist, 0.60)
-psoga_hist = np.minimum(psoga_hist, 0.62)
-qiga_hist  = np.minimum(qiga_hist, 0.635)
-qpso_hist  = np.minimum(qpso_hist, 0.645)
-
-ga_dmg_hist    = np.minimum(np.array(ga_dmg_hist)    * 0.99, 0.46)
-pso_dmg_hist   = np.minimum(np.array(pso_dmg_hist)   * 0.85, 0.52)
-gapso_dmg_hist = np.minimum(np.array(gapso_dmg_hist) * 0.90, 0.60)
-psoga_dmg_hist = np.minimum(np.array(psoga_dmg_hist) * 1.11, 0.62)
-qiga_dmg_hist  = np.minimum(np.array(qiga_dmg_hist)  * 1.05, 0.635)
-qpso_dmg_hist  = np.minimum(np.array(qpso_dmg_hist)  * 1.08, 0.645)
 
 print("\nQPSO")
 print(qiga_X)

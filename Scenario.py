@@ -211,17 +211,6 @@ def execute_and_plot():
         'GA': algo_GA, 'PSO': algo_PSO, 'GAPSO': algo_GAPSO,
         'PSOGA': algo_PSOGA, 'QIGA': algo_QIGA, 'QPSO': algo_QPSO
     }
-    
-    base_order = np.array(['GA','PSO','GAPSO','PSOGA','QIGA','QPSO'])
-
-    target_rankings = {
-      k: list(np.roll(base_order, 0)) for k in scenarios
-    }
-
-    starts = {"Small": 0.80, "Medium": 0.75, "Large": 0.70}
-    forced_max_fitness = {"Small": 0.88, "Medium": 0.75, "Large": 0.62}
-    
-    forced_max_damage = {"Small": 95.0, "Medium": 89.0, "Large": 85.0} 
 
     iterations = 100
     pop_size = 40
@@ -236,90 +225,48 @@ def execute_and_plot():
             raw_histories[algo_name] = history
             raw_finals[algo_name] = final_dmg
             
-        processed_histories = {}
-        processed_finals = {}
-        
-        gap = (1.0 - starts[scen_key]) / (len(base_order) - 1)
-        
-        for algo_name in algorithms.keys():
-            rank_idx = target_rankings[scen_key].index(algo_name)
-            base_scale = np.linspace(starts[scen_key], 1.0, len(base_order))[rank_idx]
-            
-            jitter_fit = np.random.uniform(-gap * 0.35, gap * 0.35)
-            jitter_dmg = np.random.uniform(-gap * 0.35, gap * 0.35)
-            
-            target_final_damage = forced_max_damage[scen_key] * (base_scale + jitter_dmg)
-            target_final_fitness = forced_max_fitness[scen_key] * (base_scale + jitter_fit)
-            
-            damage_multiplier = target_final_damage / max(0.0001, raw_finals[algo_name])
-            fitness_multiplier = target_final_fitness / max(0.0001, raw_histories[algo_name][-1])
-            
-            processed_histories[algo_name] = [val * fitness_multiplier for val in raw_histories[algo_name]]
-            processed_finals[algo_name] = target_final_damage
-
         print("\n" + "="*75)
         print(f"{title:^45}")
         print("="*75)
-        print(f"{'Algorithm':<12}{'Fitness Score':<20}{'Overall Damage':<20}")
+        print(f"{'Algorithm':<12}{'Final Fitness':<20}{'Overall Damage':<20}")
         print("-"*75)
 
-        for algo_name in target_rankings[scen_key]:
-            fitness_score = processed_histories[algo_name][-1]
-            overall_damage = processed_finals[algo_name]
+        for algo_name in algorithms.keys():
+            fitness_score = raw_histories[algo_name][-1]
+            overall_damage = raw_finals[algo_name]
             print(f"{algo_name:<12}{fitness_score:<20.4f}{overall_damage:<20.4f}")
 
         print("-"*75)
 
-        plot_order = target_rankings[scen_key]
+        # Plotting using raw data
         colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
 
-        # Graph 1: Convergence Score 
+        # Graph 1: Convergence
         plt.figure(figsize=(8, 6))
-        plt.title(f'Weapon-Target Assignment: Convergence Score', fontsize=14)
-        for algo_name in plot_order:
-            plt.plot(processed_histories[algo_name], label=algo_name, linewidth=2.5)
-        plt.subplots_adjust(bottom=0.20)
-        plt.gcf().text(
-            0.5, 0.08,
-            title,
-            ha='center',
-            fontsize=14
-        )
-        ax = plt.gca()
-        ax.set_ylim(0, 1)
-        ax.set_yticks(np.arange(0, 1.1, 0.2))
-        ax.margins(y=0) 
+        plt.title(f'Convergence Score: {title}', fontsize=14)
+        for i, algo_name in enumerate(algorithms.keys()):
+            plt.plot(raw_histories[algo_name], label=algo_name, linewidth=2.5)
+        
         plt.xlabel('Iterations', fontsize=11)
-        plt.ylabel('Normalized Fitness', fontsize=11)
+        plt.ylabel('Fitness Score', fontsize=11)
         plt.legend(loc='lower right', fontsize=10)
-        plt.tight_layout(rect=[0, 0.12, 1, 1])
+        plt.grid(True, linestyle='--', alpha=0.6)
+        plt.tight_layout()
             
         # Graph 2: Overall Damage 
         plt.figure(figsize=(8, 6))
-        plt.title(f'Weapon-Target Assignment: Overall Damage', fontsize=14)
+        plt.title(f'Overall Damage: {title}', fontsize=14)
         
-        bars = plt.bar(plot_order, [processed_finals[a] for a in plot_order], color=colors[:len(plot_order)], alpha=0.8)
-        plt.subplots_adjust(bottom=0.20)
-        plt.gcf().text(
-            0.5, 0.08,
-            title,
-            ha='center',
-            fontsize=14
-        )
-
-        ax = plt.gca()
-        ax.set_ylim(0, 100)
-        ax.set_yticks(np.arange(0, 101, 20))
-        ax.margins(y=0) 
+        algo_names = list(algorithms.keys())
+        damage_values = [raw_finals[a] for a in algo_names]
+        
+        bars = plt.bar(algo_names, damage_values, color=colors[:len(algo_names)], alpha=0.8)
         plt.ylabel('Damage', fontsize=11)
         
         for bar in bars:
             yval = bar.get_height()
             plt.text(bar.get_x() + bar.get_width()/2, yval + 0.5, f'{yval:.1f}', ha='center', va='bottom', fontsize=10)
 
-        plt.tight_layout(rect=[0, 0.12, 1, 1])
+        plt.tight_layout()
 
     plt.show()
-   
-if __name__ == "__main__":
-    execute_and_plot()

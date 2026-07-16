@@ -213,120 +213,60 @@ def algo_QIGA(scenario, iterations, pop_size):
                 Q_matrix[i, w] /= np.sum(Q_matrix[i, w])
     return best_history, scenario.calc_damage(gbest)
 
-def run_statistical_analysis(num_trials=30):
+def run_statistical_analysis(num_trials=40):
+    scenarios = {
+        "Small": WTA_Scenario(4, 5),
+        "Medium": WTA_Scenario(8, 10),
+        "Large": WTA_Scenario(14, 16)
+    }
+    
+    algorithms = {
+        'GA': algo_GA, 'PSO': algo_PSO, 'GAPSO': algo_GAPSO,
+        'PSOGA': algo_PSOGA, 'QIGA': algo_QIGA, 'QPSO': algo_QPSO
+    }
 
-    small_scale_damage = {
-        'GA': 75.6337,
-        'PSO': 80.9443,
-        'GAPSO': 84.9077,
-        'PSOGA': 87.7044,
-        'QIGA': 90.1534,
-        'QPSO': 95.9765
-    }
-    
+    iterations = 100
+    pop_size = 40
     results = []
-    print("="*75)
-    print(f"------- Small Scale (4W-5T) -------")
-    print("="*75)
-    np.random.seed(42) 
-    for algo_name, mean_dmg in small_scale_damage.items():
-        for i in range(num_trials):
-            noise = np.random.normal(0, mean_dmg * 0.01)
-            final_dmg = mean_dmg + noise
-            results.append({'Algorithm': algo_name, 'Damage': final_dmg})
-            
-    df = pd.DataFrame(results)
-    
-    groups = [df[df['Algorithm'] == algo]['Damage'] for algo in small_scale_damage.keys()]
-    f_stat, p_val = stats.f_oneway(*groups)
-    
-    print(f"\n--- ANOVA Results ---")
-    print(f"F-statistic: {f_stat:.4f}, p-value: {p_val:.4e}")
-    
-    if p_val < 0.05:
-        print("\n--- Tukey HSD Post-hoc Test ---")
-        tukey = pairwise_tukeyhsd(endog=df['Damage'], groups=df['Algorithm'], alpha=0.05)
-        print(tukey)
-        
-        print("\n--- Damage per Algorithm ---")
-        print(df.groupby('Algorithm')['Damage'].mean().sort_values(ascending=False))
-    else:
-        print("\nNo significant difference found between algorithms.")
-    medium_scale_damage = {
-        'GA': 66.5397,
-        'PSO': 70.4820,
-        'GAPSO': 75.6745,
-        'PSOGA': 81.2148,
-        'QIGA': 85.9882,
-        'QPSO': 88.4390
-    }
-    
-    results = []
-    print("="*75)
-    print(f"------- Medium Scale (8W-10T) -------")
-    print("="*75)
-    np.random.seed(42) 
-    for algo_name, mean_dmg in medium_scale_damage.items():
-        for i in range(num_trials):
-            noise = np.random.normal(0, mean_dmg * 0.01)
-            final_dmg = mean_dmg + noise
-            results.append({'Algorithm': algo_name, 'Damage': final_dmg})
-            
-    df = pd.DataFrame(results)
-    
-    groups = [df[df['Algorithm'] == algo]['Damage'] for algo in medium_scale_damage.keys()]
-    f_stat, p_val = stats.f_oneway(*groups)
-    
-    print(f"\n--- ANOVA Results ---")
-    print(f"F-statistic: {f_stat:.4f}, p-value: {p_val:.4e}")
-    
-    if p_val < 0.05:
-        print("\n--- Tukey HSD Post-hoc Test ---")
-        tukey = pairwise_tukeyhsd(endog=df['Damage'], groups=df['Algorithm'], alpha=0.05)
-        print(tukey)
-        
-        print("\n--- Damage per Algorithm ---")
-        print(df.groupby('Algorithm')['Damage'].mean().sort_values(ascending=False))
-    else:
-        print("\nNo significant difference found between algorithms.")
 
-    large_scale_damage = {
-        'GA': 60.5795,
-        'PSO': 64.6949,
-        'GAPSO': 68.3022,
-        'PSOGA': 73.5133,
-        'QIGA': 80.3818,
-        'QPSO': 85.9420
-    }
-    
-    results = []
-    print("="*75)
-    print(f"------- Large Scale (14W-16T) -------")
-    print("="*75)
-    np.random.seed(42) 
-    for algo_name, mean_dmg in large_scale_damage.items():
-        for i in range(num_trials):
-            noise = np.random.normal(0, mean_dmg * 0.01)
-            final_dmg = mean_dmg + noise
-            results.append({'Algorithm': algo_name, 'Damage': final_dmg})
-            
+    for scen_name, scenario in scenarios.items():
+        for algo_name, algo_func in algorithms.items():
+            for _ in range(num_trials):
+                _, final_dmg = algo_func(scenario, iterations, pop_size)
+                results.append({
+                    'Scenario': scen_name, 
+                    'Algorithm': algo_name, 
+                    'Damage': final_dmg
+                })
+
     df = pd.DataFrame(results)
-    
-    groups = [df[df['Algorithm'] == algo]['Damage'] for algo in large_scale_damage.keys()]
+
+    # --- 1. Mean and Variance ---
+    stats_summary = df.groupby('Algorithm')['Damage'].agg(['mean', 'var']).sort_values(by='mean', ascending=False)
+
+    # --- 2. ANOVA ---
+    groups = [df[df['Algorithm'] == algo]['Damage'] for algo in algorithms.keys()]
     f_stat, p_val = stats.f_oneway(*groups)
-    
-    print(f"\n--- ANOVA Results ---")
-    print(f"F-statistic: {f_stat:.4f}, p-value: {p_val:.4e}")
-    
-    if p_val < 0.05:
-        print("\n--- Tukey HSD Post-hoc Test ---")
-        tukey = pairwise_tukeyhsd(endog=df['Damage'], groups=df['Algorithm'], alpha=0.05)
-        print(tukey)
-        
-        print("\n--- Damage per Algorithm ---")
-        print(df.groupby('Algorithm')['Damage'].mean().sort_values(ascending=False))
-    else:
-        print("\nNo significant difference found between algorithms.")
+
+    # --- 3. Tukey HSD ---
+    tukey = pairwise_tukeyhsd(endog=df['Damage'], groups=df['Algorithm'], alpha=0.05)
+
+    # --- Printing Results ---
+    print("="*60)
+    print("STATISTICAL SUMMARY (Aggregated across Scenarios)")
+    print("="*60)
+    print(stats_summary.reset_index().to_string(index=False, float_format=lambda x: f"{x:.4f}"))
+
+    print("\n" + "="*60)
+    print("ANOVA RESULTS")
+    print("="*60)
+    print(f"F-statistic : {f_stat:.4f}")
+    print(f"p-value     : {p_val:.4e}")
+
+    print("\n" + "="*60)
+    print("TUKEY HSD POST-HOC TEST")
+    print("="*60)
+    print(tukey)
 
 if __name__ == "__main__":
-    run_statistical_analysis(num_trials=30)
+    run_statistical_analysis(num_trials=40)
