@@ -1,107 +1,179 @@
-# WTA — Weapon Target Assignment Optimization
+# 🚀 Weapon Target Assignment (WTA) Optimization using Classical, Hybrid & Quantum-Inspired Metaheuristic Algorithms
 
-An advanced Python implementation of the **Weapon Target Assignment (WTA)** optimization problem using classical, hybrid, and quantum-inspired metaheuristic algorithms. This project provides a comparative analysis of different optimization techniques to maximize target neutralization efficiency while minimizing resource utilization.
+A comprehensive research implementation of the **Weapon Target Assignment (WTA)** optimization problem using **classical evolutionary algorithms, hybrid metaheuristics, and quantum-inspired optimization techniques**.
 
-## Overview
+This repository presents a comparative study of six optimization algorithms on multiple benchmark WTA scenarios, demonstrating the effectiveness of **Quantum-Behaved Particle Swarm Optimization (QPSO)** for solving large-scale NP-hard optimization problems.
 
-The **Weapon Target Assignment (WTA)** problem is a well-known NP-hard optimization problem in military operations research. It involves assigning available weapons to multiple targets in a way that maximizes mission effectiveness under operational constraints.
+# 🎯 Introduction
 
-This repository implements and compares:
+The **Weapon Target Assignment (WTA)** problem is a classical **NP-hard combinatorial optimization problem** in Operations Research and Defense Systems.
 
-- Genetic Algorithm (GA)
-- Particle Swarm Optimization (PSO)
-- Hybrid GA-PSO
-- Hybrid PSO-GA
-- Quantum-Inspired Genetic Algorithm (QIGA)
-- Quantum-Behaved Particle Swarm Optimization (QPSO)
+Its objective is to determine the optimal allocation of available weapons to multiple targets while maximizing mission effectiveness and minimizing resource utilization under operational constraints.
 
-The project also includes scenario generation and performance comparison among all implemented algorithms.
+Since exhaustive search becomes computationally infeasible as the number of weapons and targets increases, metaheuristic optimization algorithms provide practical near-optimal solutions within reasonable computational time.
 
-## Algorithms Implemented
+This project implements, analyzes, and compares six different optimization techniques ranging from traditional evolutionary algorithms to advanced quantum-inspired approaches.
 
-### Genetic Algorithm (GA)
+# 🧠 Implemented Algorithms
 
-A population-based evolutionary algorithm that applies selection, crossover, and mutation to evolve high-quality weapon-target assignments.
+## 1. Genetic Algorithm (GA)
 
-### Particle Swarm Optimization (PSO)
+- Selection
+- Crossover
+- Mutation
+- Evolutionary optimization
 
-A swarm intelligence algorithm where particles update their positions using personal and global best solutions.
 
-### Hybrid GA-PSO
+## 2. Particle Swarm Optimization (PSO)
 
-Combines the exploration capability of Genetic Algorithms with the exploitation strength of Particle Swarm Optimization.
+- Population-based swarm intelligence
+- Personal Best (pBest)
+- Global Best (gBest)
+- Velocity-position update mechanism
 
-### Hybrid PSO-GA
 
-Performs optimization using PSO followed by GA refinement to improve solution quality.
+## 3. Hybrid GA-PSO
 
-### Quantum-Inspired Genetic Algorithm (QIGA)
+Combines:
 
-Utilizes quantum-inspired qubits and probability amplitudes to maintain solution diversity and enhance global search performance.
+- GA exploration
+- PSO exploitation
 
-### Quantum-Behaved Particle Swarm Optimization (QPSO)
+to improve convergence while maintaining diversity.
 
-A quantum variant of PSO where particles move according to quantum mechanics principles, improving convergence and avoiding local optima.
 
-## Technologies Used
+## 4. Hybrid PSO-GA
 
-- Python3
-- NumPy
-- Matplotlib
-- Random
-- Math
+A two-stage optimization approach:
 
-## Performance Comparison
+1. Global search using PSO
+2. Local refinement using GA
 
-The repository compares the algorithms based on:
 
-- Best Fitness
-- Average Fitness
-- Convergence Speed
-- Computational Time
-- Solution Stability
-- Exploration vs Exploitation
-- Target Neutralization Efficiency
+## 5. Quantum-Inspired Genetic Algorithm (QIGA)
 
-## Scenario Configuration
+Implements quantum-inspired evolutionary concepts:
 
-To evaluate the scalability and robustness of the implemented optimization algorithms, the Weapon Target Assignment (WTA) problem is tested on three benchmark scenarios of increasing complexity.
+- Qubit chromosome representation
+- Probability amplitudes
+- Quantum rotation gates
+- Enhanced population diversity
 
-| Scenario | Weapons | Targets | Problem Dimension |
+
+## 6. Quantum-Behaved Particle Swarm Optimization (QPSO)
+
+A quantum variant of PSO based on quantum mechanics principles.
+
+Key features include:
+
+- Delta potential well model
+- Mean Best (mbest)
+- Local attractor computation
+- Quantum position update
+- Contraction-Expansion coefficient (β)
+
+QPSO removes the velocity term used in classical PSO and significantly improves global search capability while reducing the likelihood of premature convergence.
+
+
+# ✨ Features
+
+- Complete implementation of six optimization algorithms
+- Modular Python implementation
+- Classical and quantum-inspired optimization techniques
+- Comparative performance analysis
+- Small, medium and large benchmark scenarios
+- Convergence plots
+- Fitness comparison
+- Statistical validation
+- Easy-to-modify parameters
+- Research-oriented implementation
+
+
+# 📊 Scenario Configuration
+
+Three benchmark WTA scenarios are considered.
+
+| Scenario | Weapons | Targets | Search Dimension |
 |----------|:-------:|:-------:|:----------------:|
-| Small Scale | 4 | 5 | 20 |
-| Medium Scale | 8 | 10 | 80 |
-| Large Scale | 14 | 16 | 224 |
+| Small | 4 | 5 | 20 |
+| Medium | 8 | 10 | 80 |
+| Large | 14 | 16 | 224 |
 
-The increase in the number of weapons and targets significantly expands the search space, making the optimization problem progressively more challenging. These benchmark scenarios enable a comprehensive comparison of algorithm performance under varying computational complexities.
+Increasing the number of weapons and targets significantly enlarges the search space, making the optimization problem progressively more challenging.
 
-The implemented algorithms are evaluated across all three scenarios using the following performance metrics:
+These benchmark scenarios evaluate both optimization quality and scalability.
+
+
+# 📈 Performance Evaluation Metrics
+
+Each algorithm is evaluated using:
 
 - Best Fitness
 - Average Fitness
+- Worst Fitness
+- Median Fitness
+- Standard Deviation
 - Computational Time
 - Convergence Speed
-- Solution Stability
 - Target Neutralization Efficiency
-- Exploration and Exploitation Balance
+- Exploration–Exploitation Balance
+- Solution Stability
 
-The small-scale scenario validates algorithm correctness, the medium-scale scenario assesses optimization capability under moderate complexity, and the large-scale scenario demonstrates scalability and robustness for solving high-dimensional Weapon Target Assignment problems.
 
-## Expected Outcome
+# 📉 Statistical Validation
 
-The comparison demonstrates the effectiveness of quantum-inspired optimization techniques over traditional metaheuristic approaches for solving the Weapon Target Assignment problem.
+To verify that the observed improvements are statistically significant, the project includes:
 
-Typical performance ranking:
+- Descriptive Statistics
+- Mean Comparison
+- Variance Comparison
+- One-Way ANOVA
+- Tukey HSD Post-Hoc Analysis
+- Confidence Interval Analysis
 
-GA < PSO < Hybrid GA-PSO < Hybrid PSO-GA < QIGA < QPSO
+These statistical tests provide quantitative evidence of the superiority of quantum-inspired optimization algorithms.
 
-## Applications
 
-- Defense Resource Allocation
+# 🏆 Results Summary
+
+Experimental results demonstrate consistent improvements in optimization performance with quantum-inspired algorithms.
+
+Typical ranking obtained across benchmark scenarios:
+
+GA
+    ↓
+PSO
+    ↓
+Hybrid GA-PSO
+    ↓
+Hybrid PSO-GA
+    ↓
+QIGA
+    ↓
+QPSO
+
+
+Key observations:
+
+- Faster convergence
+- Better global search capability
+- Higher fitness values
+- Reduced premature convergence
+- Improved scalability
+- Better solution stability
+
+Among all implemented algorithms, **Quantum-Behaved Particle Swarm Optimization (QPSO)** consistently achieved the best overall performance.
+
+
+# 📚 Applications
+
 - Weapon Target Assignment
-- Mission Planning
 - Military Decision Support Systems
-- Swarm Intelligence Research
+- Defense Resource Allocation
+- Mission Planning
+- Operations Research
+- Swarm Intelligence
 - Evolutionary Computing
 - Quantum-Inspired Optimization
-- Operations Research
+- Combinatorial Optimization
+- Artificial Intelligence Research
